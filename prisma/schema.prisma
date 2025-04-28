@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Video {
+  id            String     @id @default(uuid())
+  name          String
+  originalName  String
+  duration      Int?       // in seconds
+  size          Int        // in bytes
+  status        String     // UPLOADED, PROCESSING, READY
+  originalPath  String
+  finalPath     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  // Related models for editing operations
+  trims         Trim[]
+  subtitles     Subtitle[]
+}
+
+model Trim {
+  id        String   @id @default(uuid())
+  startTime Float    // in seconds
+  endTime   Float    // in seconds
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Subtitle {
+  id        String   @id @default(uuid())
+  text      String
+  startTime Float    // in seconds
+  endTime   Float    // in seconds
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id])
+  createdAt DateTime @default(now())
+}
