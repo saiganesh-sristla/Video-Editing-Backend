@@ -7,4 +7,19 @@ const videoController = require('../controllers/videoController');
 // Upload a new video
 router.post('/upload', upload.single('video'), videoController.uploadVideo);
 
+// Get all videos with pagination
+router.get('/', videoController.getAllVideos);
+
+// Get a single video by ID
+router.get('/:id', videoController.getVideoById);
+
+// Create a trim operation for a video
+router.post('/:id/trim', videoController.createTrim);
+
+// Process a trim operation to create the trimmed video
+router.post('/:id/trim/:trimId/process', videoController.processTrim);
+
+// Add subtitles to a video
+router.post('/:id/subtitles', videoController.addSubtitles);
+
 module.exports = router;
