@@ -22,4 +22,6 @@ router.post('/:id/trim/:trimId/process', videoController.processTrim);
 // Add subtitles to a video
 router.post('/:id/subtitles', videoController.addSubtitles);
 
+router.post('/:id/subtitles/process', videoController.processSubtitles);
+
 module.exports = router;

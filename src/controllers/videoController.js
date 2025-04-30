@@ -132,6 +132,25 @@ const addSubtitles = async (req, res, next) => {
   }
 };
 
+const processSubtitles = async (req, res, next) => {
+  try {
+    const video = await videoService.getVideoById(req.params.id);
+    if (!video) throw new ApiError(404, 'Video not found');
+    if (!video.subtitles?.length) throw new ApiError(400, 'No subtitles to process');
+
+    const inputPath = video.finalPath || video.originalPath;
+    const outputPath = path.join(__dirname, '../../uploads/processed', `subtitled-${Date.now()}.mp4`);
+
+    await ffmpegService.addSubtitles(inputPath, outputPath, video.subtitles);
+    await videoService.updateVideoFinalPath(video.id, outputPath);
+    await videoService.updateVideoStatus(video.id, 'READY');
+
+    res.json({ message: 'Subtitles applied', finalPath: outputPath });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   uploadVideo,
   getAllVideos,
@@ -139,4 +158,5 @@ module.exports = {
   createTrim,
   processTrim,
   addSubtitles,
+  processSubtitles
 };

@@ -42,34 +42,38 @@ const trimVideo = (videoPath, outputPath, startTime, endTime) => {
 // Add subtitles to a video
 const addSubtitles = (videoPath, outputPath, subtitles) => {
   return new Promise((resolve, reject) => {
-    // Generate subtitles file (SRT format)
-    const subtitlePath = `${path.dirname(outputPath)}/temp_subs_${Date.now()}.srt`;
+    const subtitleDir = path.dirname(outputPath);
+    const subtitlePath = path.join(subtitleDir, `temp_subs_${Date.now()}.srt`);
+
+    // Ensure the directory exists
+    if (!fs.existsSync(subtitleDir)) {
+      fs.mkdirSync(subtitleDir, { recursive: true });
+    }
+
     let srtContent = '';
-    
+
     subtitles.forEach((subtitle, index) => {
       const startTimeFormatted = formatTimeForSRT(subtitle.startTime);
       const endTimeFormatted = formatTimeForSRT(subtitle.endTime);
-      
+
       srtContent += `${index + 1}\n`;
       srtContent += `${startTimeFormatted} --> ${endTimeFormatted}\n`;
       srtContent += `${subtitle.text}\n\n`;
     });
-    
+
     fs.writeFileSync(subtitlePath, srtContent);
-    
-    // Apply subtitles using FFmpeg
+
+    // Escape subtitle path for Windows and FFmpeg
+    const escapedPath = subtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:');
+
     ffmpeg(videoPath)
-      .outputOptions([
-        `-vf subtitles=${subtitlePath.replace(/\\/g, '/')}` // Fix path for FFmpeg
-      ])
+      .videoFilter(`subtitles='${escapedPath}'`)
       .output(outputPath)
       .on('end', () => {
-        // Clean up temp subtitle file
         fs.unlinkSync(subtitlePath);
         resolve(outputPath);
       })
       .on('error', (err) => {
-        // Clean up on error too
         if (fs.existsSync(subtitlePath)) {
           fs.unlinkSync(subtitlePath);
         }
@@ -78,6 +82,7 @@ const addSubtitles = (videoPath, outputPath, subtitles) => {
       .run();
   });
 };
+
 
 // Helper function to format time for SRT format (00:00:00,000)
 const formatTimeForSRT = (timeInSeconds) => {
