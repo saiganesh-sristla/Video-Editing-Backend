@@ -26,4 +26,6 @@ router.post('/:id/subtitles/process', videoController.processSubtitles);
 
 router.post('/:id/render', videoController.renderVideo);
 
+router.get('/:id/download', videoController.downloadVideo);
+
 module.exports = router;

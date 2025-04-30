@@ -195,6 +195,19 @@ const renderVideo = async (req, res, next) => {
   }
 };
 
+const downloadVideo = async (req, res, next) => {
+  try {
+    const video = await videoService.getVideoById(req.params.id);
+    if (!video) throw new ApiError(404, 'Video not found');
+    if (video.status !== 'READY' || !video.finalPath) throw new ApiError(400, 'Video not ready');
+
+    res.download(video.finalPath, (err) => {
+      if (err) next(new ApiError(500, 'Download failed'));
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 module.exports = {
   uploadVideo,
@@ -204,5 +217,6 @@ module.exports = {
   processTrim,
   addSubtitles,
   processSubtitles,
-  renderVideo
+  renderVideo,
+  downloadVideo
 };
