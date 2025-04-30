@@ -141,13 +141,20 @@ POST /api/videos/:id/subtitles
 ```
 - **Body**:
   ```json
-  [
+  {
+  "subtitles": [
     {
       "text": "Hello world",
-      "startTime": 5.0,
-      "endTime": 8.0
+      "startTime": 15.0,
+      "endTime": 18.5
+    },
+    {
+      "text": "This is a demo",
+      "startTime": 20.0,
+      "endTime": 25.0
     }
   ]
+  }
   ```
 
 #### Process Subtitles
