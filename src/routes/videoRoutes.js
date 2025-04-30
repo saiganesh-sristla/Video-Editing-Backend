@@ -24,4 +24,6 @@ router.post('/:id/subtitles', videoController.addSubtitles);
 
 router.post('/:id/subtitles/process', videoController.processSubtitles);
 
+router.post('/:id/render', videoController.renderVideo);
+
 module.exports = router;

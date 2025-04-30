@@ -151,6 +151,51 @@ const processSubtitles = async (req, res, next) => {
   }
 };
 
+const renderVideo = async (req, res, next) => {
+  try {
+    const video = await videoService.getVideoById(req.params.id);
+    if (!video) throw new ApiError(404, 'Video not found');
+
+    // Get latest trim
+    const latestTrim = video.trims?.length 
+      ? video.trims.reduce((a, b) => a.createdAt > b.createdAt ? a : b)
+      : null;
+
+    let inputPath = video.originalPath;
+    let outputPath;
+
+    // Apply trim
+    if (latestTrim) {
+      outputPath = path.join(__dirname, '../../uploads/processed', `trimmed-${Date.now()}.mp4`);
+      await ffmpegService.trimVideo(inputPath, outputPath, latestTrim.startTime, latestTrim.endTime);
+      inputPath = outputPath;
+    }
+
+    // Apply subtitles (adjust timings if trimmed)
+    if (video.subtitles?.length) {
+      const adjustedSubtitles = latestTrim 
+        ? video.subtitles.map(sub => ({
+            ...sub,
+            startTime: sub.startTime - latestTrim.startTime,
+            endTime: sub.endTime - latestTrim.startTime
+          })).filter(sub => sub.startTime >= 0 && sub.endTime <= (latestTrim.endTime - latestTrim.startTime))
+        : video.subtitles;
+
+      outputPath = path.join(__dirname, '../../uploads/processed', `rendered-${Date.now()}.mp4`);
+      await ffmpegService.addSubtitles(inputPath, outputPath, adjustedSubtitles);
+    }
+
+    // Update final path
+    await videoService.updateVideoFinalPath(video.id, outputPath);
+    await videoService.updateVideoStatus(video.id, 'READY');
+
+    res.json({ message: 'Video rendered', finalPath: outputPath });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 module.exports = {
   uploadVideo,
   getAllVideos,
@@ -158,5 +203,6 @@ module.exports = {
   createTrim,
   processTrim,
   addSubtitles,
-  processSubtitles
+  processSubtitles,
+  renderVideo
 };
